@@ -1,0 +1,41 @@
+/* Home Page container styling */
+.home-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Take full viewport height */
+    padding: 20px;
+    background-color: #f9f9f9;
+  }
+  
+  /* Header styling */
+  .home-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  .home-header h1 {
+    font-size: 28px;
+    color: #333;
+  }
+  
+  .home-header p {
+    font-size: 18px;
+    color: #555;
+  }
+  
+  /* Uploader wrapper */
+  .uploader-wrapper {
+    width: 100%; /* Full width for the uploader */
+    max-width: 600px; /* Optional max width */
+    display: flex;
+    justify-content: center; /* Horizontally center the uploader */
+    align-items: center;     /* Vertically center the uploader */
+    height: 100%;            /* Take up remaining space */
+    padding: 20px;
+    background-color: #fff;   /* Optional: white background for uploader area */
+    border: 2px dashed #ccc;  /* Optional: dashed border for visual indication */
+    border-radius: 8px;
+  }
+  
