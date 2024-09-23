@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dashboard } from '@uppy/react';
 import { createUppyInstance } from './UppyProvider';
@@ -36,6 +35,24 @@ const DraggableUploader = ({ instanceKey, isOnHome, handleUploadProgress }) => {
       uppyInstance.cancelAll();
     };
   }, []);
+
+  // Add the prompt for closing the window when upload is in progress
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (isUploading) {
+        const message = 'You have uploads in progress. Are you sure you want to leave?';
+        event.preventDefault();
+        event.returnValue = message; // Some browsers require this line.
+        return message;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload); // Clean up the event listener
+    };
+  }, [isUploading]);
 
   useEffect(() => {
     if (location.pathname === '/') {
@@ -79,20 +96,6 @@ const DraggableUploader = ({ instanceKey, isOnHome, handleUploadProgress }) => {
         {/* Buttons for controlling collapse/expand */}
         {!isOnHome && (
           <div>
-            {/* <button
-              onClick={() => setIsExpanded(false)} // Hide button
-              style={{
-                padding: '6px 12px',
-                background: '#e0e0e0',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                marginRight: '8px', // Add spacing between buttons
-              }}
-            >
-              Hide
-            </button> */}
             <button
               onClick={handleExpandToggle}
               style={{
