@@ -1,154 +1,143 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dashboard } from '@uppy/react';
-import Draggable from 'react-draggable';
-import { useLocation } from 'react-router-dom';
-import { useUppy } from './UppyProvider';
+import { createUppyInstance } from './UppyProvider';
 import '@uppy/core/dist/style.css';
 import '@uppy/dashboard/dist/style.css';
-
-const DraggableUploader = () => {
-  const uppy = useUppy();
-  const location = useLocation();
-  const [isDocked, setIsDocked] = useState(false); 
-  const [isVisible, setIsVisible] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false); 
+import { useLocation } from 'react-router-dom'; 
+const DraggableUploader = ({ instanceKey, isOnHome, handleUploadProgress }) => {
+  const [uppy, setUppy] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(isOnHome); 
   const [isUploading, setIsUploading] = useState(false); 
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  const isOnUploadPage = location.pathname === '/';
+  const [uploadedFilesCount, setUploadedFilesCount] = useState(0); 
+  const location = useLocation(); 
 
   useEffect(() => {
-    if (!uppy) {
-      console.log('Uppy is not initialized');
-      return;
-    }
+    const uppyInstance = createUppyInstance(); 
+    setUppy(uppyInstance);
 
-    // Check if there are active uploads
     const checkUploads = () => {
-      const files = uppy.getFiles();
-      const hasActiveUploads = files.some(file => !file.progress.uploadComplete);
+      const files = uppyInstance.getFiles();
+      const hasActiveUploads = files.some(file => file.progress.uploadStarted && !file.progress.uploadComplete);
       setIsUploading(hasActiveUploads);
+      handleUploadProgress(hasActiveUploads); 
 
-      // Always show uploader on Home page
-      if (isOnUploadPage || hasActiveUploads) {
-        setIsVisible(true);
-        setIsDocked(!isOnUploadPage); 
-      } else {
-        setIsVisible(false); 
+      const completedFilesCount = files.filter(file => file.progress.uploadComplete).length;
+      setUploadedFilesCount(completedFilesCount); // Update file count for completed uploads
+    };
+
+    uppyInstance.on('upload-progress', checkUploads);
+    uppyInstance.on('complete', checkUploads);
+
+    return () => {
+      uppyInstance.cancelAll();
+    };
+  }, []);
+
+  // Detect location change and adjust the state accordingly
+  useEffect(() => {
+    if (location.pathname === '/') {
+      setIsExpanded(true); 
+    } else {
+      setIsExpanded(false); 
+    }
+  }, [location, isUploading]); 
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (isUploading) {
+        const message = 'You have an ongoing upload. Are you sure you want to leave?';
+        event.preventDefault(); // Some browsers require preventDefault
+        event.returnValue = message; // Required for modern browsers
+        return message;
       }
     };
 
-    // Listen to Uppy events
-    uppy.on('upload', checkUploads);
-    uppy.on('complete', checkUploads);
-    uppy.on('file-added', checkUploads);
-    uppy.on('upload-progress', checkUploads);
-
-    // Run an initial check
-    checkUploads();
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      uppy.off('upload', checkUploads);
-      uppy.off('complete', checkUploads);
-      uppy.off('file-added', checkUploads);
-      uppy.off('upload-progress', checkUploads);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [uppy, isOnUploadPage]);
+  }, [isUploading]);
 
   const handleExpandToggle = () => {
-    setIsExpanded(!isExpanded); 
+    setIsExpanded(!isExpanded); // Manually toggle expanded state
   };
 
-  const handleDragStop = (e, data) => {
-    setPosition({ x: data.x, y: data.y });
-  };
+  if (!uppy) return null;
 
-  if (!uppy) {
-    console.log('Uppy instance not initialized');
-    return null;
-  }
+  // Conditionally show the uploader content (collapsed or expanded)
+  const showUploader = isExpanded || isUploading;
 
-  if (!isVisible) {
-    console.log('Uploader is hidden');
-    return null;
-  }
-
-  // Render inside the specific div on the Home page
-  if (isOnUploadPage) {
-    return (
-      <div style={{ marginTop: '20px' }}>
-        <Dashboard
-          uppy={uppy}
-          proudlyDisplayPoweredByUppy={false}
-          showProgressDetails={true}
-          height={400}
-        />
-      </div>
-    );
-  }
-
-  // Render draggable uploader for other pages
-  return (
-    <Draggable
-      position={position}
-      onStop={handleDragStop}
+  const UploaderContent = (
+    <div
+      style={{
+        background: 'white',
+        border: '1px solid #ddd',
+        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+        padding: isExpanded ? '8px' : '2px',
+        borderRadius: '8px',
+        width: isExpanded ? '500px' : '250px', 
+        height: isExpanded ? 'auto' : '100px',
+        marginBottom: '10px',
+        zIndex: 1000,
+        overflow: 'hidden', 
+        transition: 'all 0.3s ease', 
+      }}
     >
-      <div
-        style={{
-          position: 'fixed',
-          bottom: isDocked ? '10px' : '20px',
-          right: isDocked ? '10px' : '20px',
-          zIndex: 1000,
-          background: 'white',
-          border: '1px solid #ddd',
-          boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-          padding: isDocked ? '8px' : '15px',
-          borderRadius: '8px',
-          width: isDocked && !isExpanded ? '350px' : '500px',
-          height: isDocked && !isExpanded ? 'auto' : 'auto',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <span style={{ fontWeight: 'bold' }}>Uploader</span>
-          <button
-            onClick={() => setIsVisible(false)}
-            style={{
-              padding: '5px 10px',
-              background: '#f5f5f5',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Hide
-          </button>
-          {isDocked && (
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isExpanded ? '10px' : '2px' }}>
+        <span style={{ fontWeight: 'bold', fontSize: isExpanded ? '14px' : '10px' }}>Uploader {instanceKey}</span>
+        <span style={{ fontWeight: 'bold', fontSize: isExpanded ? '14px' : '10px' }}>
+          {uploadedFilesCount} {uploadedFilesCount === 1 ? 'file' : 'files'} uploaded
+        </span>
+        {!isOnHome && (
+          <>
             <button
-              onClick={handleExpandToggle}
+              onClick={() => setIsExpanded(false)} // Hide button
               style={{
-                padding: '5px 10px',
+                padding: '5px 8px',
                 background: '#f5f5f5',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                marginLeft: '10px'
+                fontSize: '10px',
+              }}
+            >
+              Hide
+            </button>
+            <button
+              onClick={handleExpandToggle}
+              style={{
+                padding: '5px 8px',
+                background: '#f5f5f5',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '10px',
+                marginLeft: '5px',
               }}
             >
               {isExpanded ? 'Collapse' : 'Expand'}
             </button>
-          )}
-        </div>
+          </>
+        )}
+      </div>
 
+      <div
+        style={{
+          display: isExpanded ? 'block' : 'none', 
+        }}
+      >
         <Dashboard
           uppy={uppy}
           proudlyDisplayPoweredByUppy={false}
           showProgressDetails={true}
-          height={isDocked && !isExpanded ? 100 : 400}
+          height={showUploader ? 'auto' : 0} 
         />
       </div>
-    </Draggable>
+    </div>
   );
+
+  return <div>{UploaderContent}</div>;
 };
 
 export default DraggableUploader;
