@@ -21,6 +21,7 @@ const DraggableUploader = ({ instanceKey, isOnHome, handleUploadProgress }) => {
       const files = uppyInstance.getFiles();
       const hasActiveUploads = files.some(file => file.progress.uploadStarted && !file.progress.uploadComplete);
       setIsUploading(hasActiveUploads);
+      
       handleUploadProgress(hasActiveUploads); 
 
       // Count the number of completed uploads
@@ -34,6 +35,7 @@ const DraggableUploader = ({ instanceKey, isOnHome, handleUploadProgress }) => {
     return () => {
       uppyInstance.cancelAll();
     };
+    // eslint-disable-next-line 
   }, []);
 
   // Add the prompt for closing the window when upload is in progress

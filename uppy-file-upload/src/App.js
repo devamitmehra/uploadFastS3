@@ -1,4 +1,4 @@
-import Draggable from 'react-draggable';
+// import Draggable from 'react-draggable';
 
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, useLocation } from 'react-router-dom';
@@ -85,7 +85,7 @@ const HomeUploaderSection = ({ handleAddUploader, uploaders, handleUploadProgres
 
 const DraggableContainer = ({ isHomePage, children }) => {
   return (
-    <Draggable disabled={isHomePage}>
+    // <Draggable disabled={isHomePage}>
       <div
         style={{
           position: isHomePage ? 'relative' : 'fixed',
@@ -104,7 +104,7 @@ const DraggableContainer = ({ isHomePage, children }) => {
       >
         {children}
       </div>
-    </Draggable>
+    // </Draggable>
   );
 };
 
