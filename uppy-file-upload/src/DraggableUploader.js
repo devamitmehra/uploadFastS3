@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dashboard } from '@uppy/react';
 import { createUppyInstance } from './UppyProvider';
 import '@uppy/core/dist/style.css';
 import '@uppy/dashboard/dist/style.css';
 import { useLocation } from 'react-router-dom'; 
+
 const DraggableUploader = ({ instanceKey, isOnHome, handleUploadProgress }) => {
   const [uppy, setUppy] = useState(null);
   const [isExpanded, setIsExpanded] = useState(isOnHome); 
-  const [isUploading, setIsUploading] = useState(false); 
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadedFilesCount, setUploadedFilesCount] = useState(0); 
   const location = useLocation(); 
 
@@ -15,14 +17,16 @@ const DraggableUploader = ({ instanceKey, isOnHome, handleUploadProgress }) => {
     const uppyInstance = createUppyInstance(); 
     setUppy(uppyInstance);
 
+    // Monitor upload progress and state
     const checkUploads = () => {
       const files = uppyInstance.getFiles();
       const hasActiveUploads = files.some(file => file.progress.uploadStarted && !file.progress.uploadComplete);
       setIsUploading(hasActiveUploads);
       handleUploadProgress(hasActiveUploads); 
 
+      // Count the number of completed uploads
       const completedFilesCount = files.filter(file => file.progress.uploadComplete).length;
-      setUploadedFilesCount(completedFilesCount); // Update file count for completed uploads
+      setUploadedFilesCount(completedFilesCount);
     };
 
     uppyInstance.on('upload-progress', checkUploads);
@@ -33,105 +37,90 @@ const DraggableUploader = ({ instanceKey, isOnHome, handleUploadProgress }) => {
     };
   }, []);
 
-  // Detect location change and adjust the state accordingly
   useEffect(() => {
     if (location.pathname === '/') {
-      setIsExpanded(true); 
+      setIsExpanded(true);
     } else {
-      setIsExpanded(false); 
+      setIsExpanded(false);
     }
-  }, [location, isUploading]); 
-
-  useEffect(() => {
-    const handleBeforeUnload = (event) => {
-      if (isUploading) {
-        const message = 'You have an ongoing upload. Are you sure you want to leave?';
-        event.preventDefault(); // Some browsers require preventDefault
-        event.returnValue = message; // Required for modern browsers
-        return message;
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isUploading]);
+  }, [location, isUploading]);
 
   const handleExpandToggle = () => {
-    setIsExpanded(!isExpanded); // Manually toggle expanded state
+    setIsExpanded(!isExpanded); 
   };
 
   if (!uppy) return null;
 
-  // Conditionally show the uploader content (collapsed or expanded)
   const showUploader = isExpanded || isUploading;
 
   const UploaderContent = (
     <div
       style={{
-        background: 'white',
+        background: '#fff',
         border: '1px solid #ddd',
-        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-        padding: isExpanded ? '8px' : '2px',
-        borderRadius: '8px',
-        width: isExpanded ? '500px' : '250px', 
-        height: isExpanded ? 'auto' : '100px',
-        marginBottom: '10px',
+        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)', 
+        padding: isExpanded ? '16px' : '10px', // Adjusted padding
+        borderRadius: '12px',
+        width: isExpanded ? '500px' : '250px',
+        height: isExpanded ? 'auto' : '60px', 
+        marginBottom: '16px',
         zIndex: 1000,
         overflow: 'hidden', 
         transition: 'all 0.3s ease', 
+        fontFamily: 'Arial, sans-serif', 
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isExpanded ? '10px' : '2px' }}>
-        <span style={{ fontWeight: 'bold', fontSize: isExpanded ? '14px' : '10px' }}>Uploader {instanceKey}</span>
-        <span style={{ fontWeight: 'bold', fontSize: isExpanded ? '14px' : '10px' }}>
-          {uploadedFilesCount} {uploadedFilesCount === 1 ? 'file' : 'files'} uploaded
-        </span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isExpanded ? '16px' : '4px' }}>
+        {/* Display dynamic instance number and uploaded file count */}
+        <div style={{ fontWeight: 'bold', fontSize: isExpanded ? '16px' : '12px' }}>
+          Uploader {instanceKey} - {uploadedFilesCount} {uploadedFilesCount === 1 ? 'file' : 'files'} uploaded
+        </div>
+
+        {/* Buttons for controlling collapse/expand */}
         {!isOnHome && (
-          <>
-            <button
+          <div>
+            {/* <button
               onClick={() => setIsExpanded(false)} // Hide button
               style={{
-                padding: '5px 8px',
-                background: '#f5f5f5',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
+                padding: '6px 12px',
+                background: '#e0e0e0',
+                border: '1px solid #ccc',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                fontSize: '10px',
+                fontSize: '12px',
+                marginRight: '8px', // Add spacing between buttons
               }}
             >
               Hide
-            </button>
+            </button> */}
             <button
               onClick={handleExpandToggle}
               style={{
-                padding: '5px 8px',
-                background: '#f5f5f5',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
+                padding: '6px 12px',
+                background: '#4CAF50', // Subtle green color for expand
+                border: '1px solid #3e8e41',
+                color: 'white',
+                borderRadius: '6px',
                 cursor: 'pointer',
-                fontSize: '10px',
-                marginLeft: '5px',
+                fontSize: '12px',
               }}
             >
               {isExpanded ? 'Collapse' : 'Expand'}
             </button>
-          </>
+          </div>
         )}
       </div>
 
       <div
         style={{
-          display: isExpanded ? 'block' : 'none', 
+          display: isExpanded ? 'block' : 'none', // Show dashboard if expanded or uploading
         }}
       >
         <Dashboard
           uppy={uppy}
           proudlyDisplayPoweredByUppy={false}
           showProgressDetails={true}
-          height={showUploader ? 'auto' : 0} 
+          height={showUploader ? 'auto' : 0} // Fully collapsed when not uploading and not expanded
         />
       </div>
     </div>

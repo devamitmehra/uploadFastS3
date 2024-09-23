@@ -4,12 +4,14 @@ import '@uppy/core/dist/style.css';
 import '@uppy/dashboard/dist/style.css';
 
 export const createUppyInstance = () => {
-
   const uppyInstance = new Uppy({
     maxFileSize: null, 
     autoProceed: false, 
     debug: true,       
   });
+
+  // Declare presignedUrlsMap here to make it accessible within the function
+  let presignedUrlsMap = {};
 
   // Fetch presigned URLs for files
   const fetchPresignedUrls = async (files) => {
@@ -34,7 +36,8 @@ export const createUppyInstance = () => {
         urlsMap[fileData[index].fileName] = urlData.url;
       });
 
-      presignedUrlsMap = urlsMap; // Save the presigned URLs
+      // Assign the fetched URLs to presignedUrlsMap
+      presignedUrlsMap = urlsMap; 
       return urlsMap;
     } catch (error) {
       console.error('Error fetching presigned URLs:', error);
